@@ -76,10 +76,6 @@ class SingleSourceDataLoader(Dataset):
 
         return {"x": x, "moa": moa, "cpd": cpd, "microscope" : microscope}
 
-import random
-import torch
-from torch.utils.data import DataLoader
-
 def create_training_dataloader(adata, batch_size=64, exclude_source="source_2", use_pca=True):
     """
     Create a dataloader for training by pooling all sources except target (source 2 in our example case).
