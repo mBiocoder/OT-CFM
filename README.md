@@ -32,3 +32,8 @@ Optimal Transport with Conditional Flow Matching (OT-CFM) aligns data distributi
 * Visualization: PCA/UMAP plots to validate data alignment
 * Saved Models: Trained OT-CFM models
 
+
+## Pooled batch mapping:
+* Sampling: Pooled data from all sources except source_2 (in our example this is the target). Then we sample batches from a random source and source_2.
+* Training: Update to pass one-hot encoded vectors of the source as inputs to the model.
+* Correction: Map all sources into source_2
