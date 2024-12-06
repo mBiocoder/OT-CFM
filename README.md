@@ -2,26 +2,13 @@
 
 ## Repo structure
 
-OT-CFM/
-├── src/
-│   ├── ot_cfm/
-│   │   ├── __init__.py
-│   │   ├── data_utils.py         # For data loading, preprocessing and dataloaders
-│   │   ├── model.py              # contains the OT-CFM model definition
-│   │   ├── training.py           # Training and saving
-│   │   ├── transport.py          # Transport logic and visualization utilities
-│   │   ├── ot_flow.py            # Wrapper for ExactOptimalTransportConditionalFlowMatcher
-│   └── scripts/
-│       ├── run_ot_cfm.py         # Main entry script for running an example workflow
-│       ├── visualize_results.py  # UMAP/PCA visualization
-├── data/                         
-│   └── Tim_target2_wellres_featuresimputed_druginfoadded_pycytominer.h5ad
-├── notebooks/                   
-│   └── OT_CFM_target2_moa_without_source9.ipynb 
-├── README.md
-├── LICENSE
-├── requirements.txt
-├── setup.py                      
+src/ot_cfm/: Core package implementation.
+* data_utils.py: Handles data loading and preprocessing.
+* model.py: Defines the OT-CFM model.
+* training.py: Manages training and model saving.
+* transport.py: Includes transport logic and visualization utilities.
+scripts/: Contains runnable scripts for workflows and visualizations.
+data/: Stores input data 
 
 ## Workflow
 Optimal Transport with Conditional Flow Matching (OT-CFM) aligns data distributions between different sources or batches. By combining optimal transport (OT) and a neural network-based flow matching model, OT-CFM learns the transformation dynamics betweeen source and target domains. The OT computes the coupling matrix to nicely match points from the source to the target domain. The NN training predicts transformation velocities between distributions, then Neural ODE simmulates transformation trajectories for new data points.
