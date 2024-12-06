@@ -2,6 +2,7 @@ import scanpy as sc
 import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
+import random
 
 def load_adata(file_path, exclude_source="source_9"):
     """Loads and subsets the AnnData object."""
@@ -75,11 +76,35 @@ class SingleSourceDataLoader(Dataset):
 
         return {"x": x, "moa": moa, "cpd": cpd, "microscope" : microscope}
 
-def create_training_dataloader(adata, source1, source2, batch_size=64, use_pca=True):
-    """Create the training data loader."""
-    dataset = AnnDataSubsetDataset(adata, source1, source2, use_pca)
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
-    return dataloader
+import random
+import torch
+from torch.utils.data import DataLoader
+
+def create_training_dataloader(adata, batch_size=64, exclude_source="source_2", use_pca=True):
+    """
+    Create a dataloader for training by pooling all sources except target (source 2 in our example case).
+    """
+    # Pool all data except exclude_source
+    pooled_data = adata[~adata.obs["Metadata_Source"].isin([exclude_source])]
+
+    def batch_sampler():
+        while True:
+            # Randomlyy sample a source (excluding target!!!)
+            source = random.choice(pooled_data.obs["Metadata_Source"].unique())
+            source_data = pooled_data[pooled_data.obs["Metadata_Source"] == source]
+
+            # Sample a batch from source and source_2
+            source_indices = np.random.choice(len(source_data), batch_size, replace=False)
+            source_2_data = adata[adata.obs["Metadata_Source"] == exclude_source]
+            source_2_indices = np.random.choice(len(source_2_data), batch_size, replace=False)
+
+            yield (
+                source_data[source_indices].X,  # Features: source
+                source_2_data[source_2_indices].X,  # Features from source_2
+                torch.eye(len(pooled_data.obs["Metadata_Source"].unique()))[source],  # One-hot encoded vector
+            )
+
+    return DataLoader(batch_sampler(), batch_size=batch_size)
 
 def create_dataloader(adata, source, batch_size=64, use_pca=True):
     """Create the dataloader"""
