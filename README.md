@@ -7,7 +7,9 @@ src/ot_cfm/: Core package implementation.
 * model.py: Defines the OT-CFM model.
 * training.py: Manages training and model saving.
 * transport.py: Includes transport logic and visualization utilities.
+
 scripts/: Contains runnable scripts for workflows and visualizations.
+
 data/: Stores input data 
 
 ## Workflow
