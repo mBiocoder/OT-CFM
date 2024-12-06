@@ -2,11 +2,15 @@
 
 ## Repo structure
 
-src/ot_cfm/: Core package implementation.
+src/: Core package implementation
 * data_utils.py: Handles data loading and preprocessing.
 * model.py: Defines the OT-CFM model.
 * training.py: Manages training and model saving.
 * transport.py: Includes transport logic and visualization utilities.
+
+scripts/: Includes standalone scripts for running and visualizing OT-CFM 
+* run_ot_cfm.py:  Trains and saves models for all sources except source_2 on TARGET2 JUMP dataset.
+* visualize_results.py: Loads translated sources and visualizes them using PCA and UMAP.
 
 ## Workflow
 Optimal Transport with Conditional Flow Matching (OT-CFM) aligns data distributions between different sources or batches. By combining optimal transport (OT) and a neural network-based flow matching model, OT-CFM learns the transformation dynamics betweeen source and target domains. The OT computes the coupling matrix to nicely match points from the source to the target domain. The NN training predicts transformation velocities between distributions, then Neural ODE simmulates transformation trajectories for new data points.
