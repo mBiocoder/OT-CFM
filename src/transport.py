@@ -49,3 +49,26 @@ def transport(dataloader, ot_cfm_model, x1_label="source_3", device = "cpu", sav
       full_adata.write(save_adata_path)
 
     return full_adata
+
+
+
+def correct_sources(adata, ot_cfm_model, exclude_source="source_2", device="cpu"):
+    """
+    Correct all sources into `exclude_source` using OT-CFM."""
+    corrected_sources = []
+    for source in adata.obs["Metadata_Source"].unique():
+        if source == exclude_source:
+            continue
+
+        source_data = adata[adata.obs["Metadata_Source"] == source]
+        dataloader = create_dataloader(source_data, batch_size=64, use_pca=True)
+
+        corrected_data = []
+        for batch in dataloader:
+            batch = batch.to(device)
+            source_one_hot = torch.eye(len(adata.obs["Metadata_Source"].unique()))[source].to(device)
+            corrected_batch = ot_cfm_model(batch, source_one_hot)
+            corrected_data.append(corrected_batch)
+
+        corrected_sources.append(corrected_data)
+    return corrected_sources
