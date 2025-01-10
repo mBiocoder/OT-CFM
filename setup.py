@@ -7,6 +7,14 @@ setup(
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     install_requires=[
-        "numpy", "torch", "scanpy", "torchdyn", "matplotlib"
+        "numpy",
+        "scanpy",
+        "scprep",
+        "matplotlib",
+        "torch",
+        "torchsde",
+        "torchdyn",
+        "tqdm",
+        "torchcfm",
     ],
 )
