@@ -2,6 +2,7 @@ import scanpy as sc
 import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
+import pandas as pd
 
 def load_adata(file_path, exclude_source="source_9"):
     """Loads and subsets the AnnData object."""
