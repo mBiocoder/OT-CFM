@@ -26,7 +26,6 @@ class MLP(nn.Module):
         self.time_varying = time_varying
         self.w = w
         
-        # Not sure about MLP setup here (!!!)
         self.layer1 = nn.Linear(self.dim, self.w)
         self.layer2 = nn.Linear(self.w, self.w)
         self.layer3 = nn.Linear(self.w, 1)  
