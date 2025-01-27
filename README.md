@@ -18,20 +18,26 @@ notebooks/:
 ## Workflow
 Optimal Transport with Conditional Flow Matching (OT-CFM) aligns data distributions between different sources or batches. By combining optimal transport (OT) and a neural network-based flow matching model, OT-CFM learns the transformation dynamics betweeen source and target domains. The OT computes the coupling matrix to nicely match points from the source to the target domain. The NN training predicts transformation velocities between distributions, then Neural ODE simmulates transformation trajectories for new data points.
 
-### Input:
-* Single-cell data: AnnData object with features, metadata, and source labels
-* Configuration parameters: Options for using X_PCA or not, batch size, and training epochs
+### Input
+Single-cell AnnData with PCA features and metadata
 
-### Process:
-* Training: Train OT-CFM to map each source batch to the target domain (e.g., source 2 in our exmaple) and save trained models
-* Translation: Use trained models to transform all source batches to align with the target and then combine transformed and original data into one dataset.
-* Visualization:Use PCA/UMAP plots to assess alignment with the target domain
+##### Usage: 
+* Use time_varying=True for tasks requiring gradual or interpretable transformations over time
+* Use time_varying=False for faster training and when smooth trajectories are unnecessary
+* Confirm PCA pre-processing compatibility if use_pca=True
 
-### Output:
-* Transformed Data: New AnnData object with original and transformed data
-* Visualization: PCA/UMAP plots to validate data alignment
-* Saved Models: Trained OT-CFM models
+### Model Training
+Train the OT-CFM model to align distributions via batch-wise training
+Compute loss and update the model weights
 
+### Transformation
+Use the trained model and Neural ODE to transport pooled source data into the target domain
+Save and visualize the transformed data (e.g., PCA/UMAP plots)
+
+### Output
+Transformed AnnData object with aligned data across sources
+Visualization of the transformation results
+Saved OT-CFM model for reuse
 
 ## Pooled batch mapping:
 * Sampling: Pooled data from all sources except source_2 (in our example this is the target). Then we sample batches from a random source and source_2.
