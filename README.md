@@ -27,17 +27,17 @@ Single-cell AnnData with PCA features and metadata
 * Confirm PCA pre-processing compatibility if use_pca=True
 
 ### Model Training
-Train the OT-CFM model to align distributions via batch-wise training
-Compute loss and update the model weights
+* Train the OT-CFM model to align distributions via batch-wise training
+* Compute loss and update the model weights
 
 ### Transformation
-Use the trained model and Neural ODE to transport pooled source data into the target domain
-Save and visualize the transformed data (e.g., PCA/UMAP plots)
+* Use the trained model and Neural ODE to transport pooled source data into the target domain
+* Save and visualize the transformed data (e.g., PCA/UMAP plots)
 
 ### Output
-Transformed AnnData object with aligned data across sources
-Visualization of the transformation results
-Saved OT-CFM model for reuse
+* Transformed AnnData object with aligned data across sources
+* Visualization of the transformation results
+* Saved OT-CFM model for reuse
 
 ## Pooled batch mapping:
 * Sampling: Pooled data from all sources except source_2 (in our example this is the target). Then we sample batches from a random source and source_2.
