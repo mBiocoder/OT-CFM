@@ -83,109 +83,105 @@ def create_dataloader(adata, source, batch_size=64, use_pca=True):
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     return dataloader
 
-
-
-class PooledDataset(torch.utils.data.Dataset):
+class PooledDataset(Dataset):
     """
-    Dataset for pooling all sources except a specified target source
+    Dataset for pooling all sources except a specified target source.
+    Ensures each batch consists of samples from a single source.
     """
-    def __init__(self, adata, target_source, batch_size, use_pca=True):
-        self.adata = adata
-        self.target_source = target_source
+    def __init__(self, adata, batch_size, target_source, use_pca=True):
+        self.adata = adata  
         self.batch_size = batch_size
+        self.target_source = target_source
         self.use_pca = use_pca
-
+        
         # Separate target source and other sources
-        self.target_data = adata[adata.obs["Metadata_Source"] == target_source]
-        self.other_sources = adata[adata.obs["Metadata_Source"] != target_source]
+        self.target_data = adata[adata.obs["Metadata_Source"] == target_source].copy()
+        self.other_sources = adata[adata.obs["Metadata_Source"] != target_source].copy()
 
-        # Prepare PCA or raw features for target
+        # Prepare PCA or raw features sfor target
         self.target_X = (
             self.target_data.obsm["X_pca"] if use_pca else self.target_data.X
         )
-        self.target_moas = self.target_data.obs.Metadata_moa
+        self.target_moas = self.target_data.obs.Metadata_moa  
         self.target_cpds = self.target_data.obs.Metadata_JCP2022
         self.target_microscope = self.target_data.obs.Metadata_Microscope_Name
 
         # Prepare data for each other source
         self.sources = {
-            source: adata[adata.obs["Metadata_Source"] == source]
+            source: adata[adata.obs["Metadata_Source"] == source].copy()
             for source in self.other_sources.obs["Metadata_Source"].unique()
         }
         self.num_sources = len(self.sources)
 
+        # Initialize dictionary mapping range(num_sources) to the source id
+        self.id2source = dict(zip(range(self.num_sources), 
+                                  list(self.sources.keys())))
+
     def __len__(self):
-        """
-        Returns the total number of sources.
-        """
-        return self.num_sources # len(self.target_data)
+        """Returns the total number of target samples."""
+        return self.num_sources
 
-    def __getitem__(self, idx):
+    def __getitem__(self, source_idx):
         """
-        Returns a batch of source data, target data, and source labels with metadata
+        Returns a batch of source data, target data, and source labels with metadata.
+        Ensures that all source samples in the batch are from the same source.
         """
-        # Get a random source (exclude target_source)
-        source_name = list(self.sources.keys())[idx] # comment it out
+        idx_target = np.random.choice(range(len(self.target_X)),
+                                     self.batch_size)  # Sample target observation index 
+        # Collect a batch of targets
+        target_X_batch = torch.tensor(self.target_X[idx_target], dtype=torch.float32)
+        target_moas_batch = self.target_moas.iloc[idx_target].values
+        target_cpds_batch = self.target_cpds.iloc[idx_target].values
+        target_microscope_batch = self.target_microscope.iloc[idx_target].values
+        
+        # Randomly select one source for the entire batch
+        source_name = self.id2source[source_idx]
 
-        # Sample from the source
+        # Randomly sample the same number of observations from this source
         source_data = self.sources[source_name]
-        source_X = (
-            source_data.obsm["X_pca"] if self.use_pca else source_data.X
+        random_idx_source = np.random.choice(len(source_data), 
+                                            self.batch_size)
+        source_adata_batch = source_data[random_idx_source]
+
+        source_X_batch = (
+            source_adata_batch.obsm["X_pca"] if self.use_pca else source_adata_batch.X
         )
-        source_moas = source_data.obs.Metadata_moa
-        source_cpds = source_data.obs.Metadata_JCP2022
-        source_microscope = source_data.obs.Metadata_Microscope_Name
+        source_X_batch = torch.tensor(source_X_batch, dtype=torch.float32)
 
-        # Randomly sample from source data
-        source_indices = np.random.choice(len(source_X), self.batch_size, replace=False)
-        source_batch = torch.tensor(source_X[source_indices], dtype=torch.float32)
-        source_moa_batch = [
-            source_moas.iloc[i] if not pd.isna(source_moas.iloc[i]) else "NA" for i in source_indices
-        ]
-        source_cpd_batch = [
-            source_cpds.iloc[i] if not pd.isna(source_cpds.iloc[i]) else "NA" for i in source_indices
-        ]
-        source_microscope_batch = [
-            source_microscope.iloc[i] if not pd.isna(source_microscope.iloc[i]) else "NA" for i in source_indices
-        ]
-
-        # Randomly sample from target data
-        target_indices = np.random.choice(len(self.target_X), self.batch_size, replace=False)
-        target_batch = torch.tensor(self.target_X[target_indices], dtype=torch.float32)
-        target_moa_batch = [
-            self.target_moas.iloc[i] if not pd.isna(self.target_moas.iloc[i]) else "NA" for i in target_indices
-        ]
-        target_cpd_batch = [
-            self.target_cpds.iloc[i] if not pd.isna(self.target_cpds.iloc[i]) else "NA" for i in target_indices
-        ]
-        target_microscope_batch = [
-            self.target_microscope.iloc[i] if not pd.isna(self.target_microscope.iloc[i]) else "NA" for i in target_indices
-        ]
+        # Extract source metadata
+        source_moas = source_adata_batch.obs.Metadata_moa.values
+        source_cpds = source_adata_batch.obs.Metadata_JCP2022.values
+        source_microscope = source_adata_batch.obs.Metadata_Microscope_Name.values
 
         # One-hot encode the source label
-        source_label = torch.eye(self.num_sources)[idx]
+        source_label = torch.eye(self.num_sources)[(source_idx*torch.ones(target_X_batch.shape[0])).long()]
 
         return {
             "source": {
-                "x": source_batch,
-                "moa": source_moa_batch,
-                "cpd": source_cpd_batch,
-                "microscope": source_microscope_batch,
+                "x": source_X_batch,
+                "moa": source_moas,
+                "cpd": source_cpds,
+                "microscope": source_microscope,
             },
             "target": {
-                "x": target_batch,
-                "moa": target_moa_batch,
-                "cpd": target_cpd_batch,
+                "x": target_X_batch,
+                "moa": target_moas_batch,
+                "cpd": target_cpds_batch,
                 "microscope": target_microscope_batch,
             },
             "source_label": source_label,
         }
+
+def collate_fn(data):
+    return data[0]
     
 def create_training_dataloader(adata, batch_size=64, exclude_source="source_2", use_pca=True):
     """
     Create a dataloader for training by pooling all sources except the target.
+    Ensures each batch consists of observations from a single source.
     """
-    dataset = PooledDataset(adata, target_source=exclude_source, batch_size=batch_size, use_pca=use_pca) # remov batch size
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True) # shall I set batch size to 1 here??
-
-    return dataloader
+    dataset = PooledDataset(adata, batch_size=batch_size, target_source=exclude_source, use_pca=use_pca)
+    
+    dataloader = DataLoader(dataset, batch_size=1, shuffle=True, collate_fn=collate_fn)
+    
+    return dataset, dataloader
