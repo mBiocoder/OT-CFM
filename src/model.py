@@ -40,17 +40,17 @@ class MLP(nn.Module):
         self.layer3 = nn.Linear(self.w, 1)
 
     def forward(self, source_batch, source_one_hot, time):
-        # Ensure source_one_hot has the shape [64, 9, 9] by repeating the one-hot encoding across the batch size
         source_one_hot = source_one_hot.unsqueeze(1).repeat(1, source_batch.shape[1], 1)
+        source_batch = source_batch.unsqueeze(1).expand(-1, source_one_hot.shape[1], -1)
 
         # Debugging
-        print("source_batch shape:", source_batch.shape)  # [64, 9, 50]
-        print("source_one_hot shape:", source_one_hot.shape)  # [64, 9, 9]
-        print("time shape:", time.shape)  # [64, 9, 1]
+        #print("source_batch shape:", source_batch.shape)  # [1, 50, 50]
+        #print("source_one_hot shape:", source_one_hot.shape)  # [1, 50, 9]
+        #print("time shape:", time.shape)  # [1, 50, 1]
 
         # Concatenate inputs along the feature dimension
-        x = torch.cat([source_batch, source_one_hot, time], dim=-1)  # [64, 9, 60]
-        print("Shape of concatenated input:", x.shape)
+        x = torch.cat([source_batch, source_one_hot, time], dim=-1)  
+        #7print("Shape of concatenated input:", x.shape) [1, 50, 60]
 
         # Pass through layers
         x = F.relu(self.layer1(x))
