@@ -71,3 +71,4 @@ def load_ot_cfm_model(model, optimizer, filepath):
     checkpoint = torch.load(filepath)
     model.load_state_dict(checkpoint["model"].state_dict())
     optimizer.load_state_dict(checkpoint["optimizer"].state_dict())
+    return 

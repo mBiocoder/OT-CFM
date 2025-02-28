@@ -26,8 +26,10 @@ def create_ot_cfm_model(adata, use_pca=True, time_varying=True, w=64, num_source
     # Return MMLP model
     return MLP(dim=input_dim, time_varying=time_varying, w=w)
 
-    
-class MLP(nn.Module):
+
+
+#Used for training!
+"""class MLP(nn.Module):
     def __init__(self, dim, time_varying=True, w=64):
         super(MLP, self).__init__()
         self.dim = dim 
@@ -40,7 +42,12 @@ class MLP(nn.Module):
         self.layer3 = nn.Linear(self.w, 1)
 
     def forward(self, source_batch, source_one_hot, time):
-        source_one_hot = source_one_hot.unsqueeze(1).repeat(1, source_batch.shape[1], 1)
+        #source_one_hot = source_one_hot.unsqueeze(1).repeat(1, source_batch.shape[1], 1) #original
+        source_one_hot = source_one_hot.squeeze(1)  # for transport
+        source_one_hot = source_one_hot.expand(-1, source_batch.shape[1], -1)  # Expand along the seq_len dimension (for training!)
+        #source_one_hot = source_one_hot.unsqueeze(1).expand(-1, source_batch.shape[1], -1) # (for transport)
+
+
         source_batch = source_batch.unsqueeze(1).expand(-1, source_one_hot.shape[1], -1)
 
         # Debugging
@@ -56,7 +63,39 @@ class MLP(nn.Module):
         x = F.relu(self.layer1(x))
         x = F.relu(self.layer2(x))
         x = self.layer3(x)
+        return x"""
+
+    
+#Used for transport!
+class MLP(nn.Module):
+    def __init__(self, dim=60, time_varying=True, w=64): 
+        super(MLP, self).__init__()
+        self.dim = dim
+        self.time_varying = time_varying
+        self.w = w
+
+        # Define layers with correct input size
+        self.layer1 = nn.Linear(self.dim, self.w)  
+        self.layer2 = nn.Linear(self.w, self.w)
+        self.layer3 = nn.Linear(self.w, 1)
+
+    def forward(self, source_batch, source_one_hot, time):
+        # Debugging to check input shapes
+        print("in MLP:")
+        print(f"x shape (MLP): {source_batch.shape}")  # [64, 60] after concatenation in TorchWrapper
+        print(f"time shape (MLP): {time.shape}")  # [64, 1]
+        print(f"source_one_hot shape (MLP): {source_one_hot.shape}")  # [64, 9]
+
+        # No concatenation here. Just pass through the layers
+        x = F.relu(self.layer1(source_batch))  # [64, w] 
+        x = F.relu(self.layer2(x))  # [64, w]
+        x = self.layer3(x)  # [64, 1]
+
         return x
+
+
+
+
 
 
 
