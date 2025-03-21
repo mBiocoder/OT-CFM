@@ -49,9 +49,9 @@ class SingleSourceDataLoader(Dataset):
         self.use_pca = use_pca
 
         self.source_data = self.adata[self.adata.obs["Metadata_Source"] == source]
-        self.moas = self.source_data.obs.Metadata_moa
-        self.cpds = self.source_data.obs.Metadata_JCP2022
-        self.microscope = self.source_data.obs.Metadata_Microscope_Name
+        #self.moas = self.source_data.obs.Metadata_moa
+        #self.cpds = self.source_data.obs.Metadata_JCP2022
+        #self.microscope = self.source_data.obs.Metadata_Microscope_Name
 
         if use_pca:
             self.X_key = "X_pca"
@@ -66,16 +66,19 @@ class SingleSourceDataLoader(Dataset):
 
     def __getitem__(self, idx):
         x = torch.tensor(self.X[idx], dtype=torch.float32)
-        moa = self.moas[idx]
-        cpd = self.cpds[idx]
-        microscope = self.microscope[idx]
+        #moa = self.moas[idx]
+        #cpd = self.cpds[idx]
+        #microscope = self.microscope[idx]
 
         # Replace NaN with a default value "NA"
-        moa = moa if not pd.isna(moa) else "NA"
-        cpd = cpd if not pd.isna(cpd) else "NA"
-        microscope = microscope if not pd.isna(microscope) else "NA"
+        #moa = moa if not pd.isna(moa) else "NA"
+        #cpd = cpd if not pd.isna(cpd) else "NA"
+        #microscope = microscope if not pd.isna(microscope) else "NA"
 
-        return {"x": x, "moa": moa, "cpd": cpd, "microscope" : microscope}
+        return {"x": x} 
+                #"moa": moa, 
+                #"cpd": cpd, 
+                #"microscope" : microscope}
 
 def create_dataloader(adata, source, batch_size=64, use_pca=True):
     """Create the dataloader"""
@@ -102,9 +105,9 @@ class PooledDataset(Dataset):
         self.target_X = (
             self.target_data.obsm["X_pca"] if use_pca else self.target_data.X
         )
-        self.target_moas = self.target_data.obs.Metadata_moa  
-        self.target_cpds = self.target_data.obs.Metadata_JCP2022
-        self.target_microscope = self.target_data.obs.Metadata_Microscope_Name
+        #self.target_moas = self.target_data.obs.Metadata_moa  
+        #self.target_cpds = self.target_data.obs.Metadata_JCP2022
+        #self.target_microscope = self.target_data.obs.Metadata_Microscope_Name
 
         # Prepare data for each other source
         self.sources = {
@@ -130,9 +133,9 @@ class PooledDataset(Dataset):
                                      self.batch_size)  # Sample target observation index 
         # Collect a batch of targets
         target_X_batch = torch.tensor(self.target_X[idx_target], dtype=torch.float32)
-        target_moas_batch = self.target_moas.iloc[idx_target].values
-        target_cpds_batch = self.target_cpds.iloc[idx_target].values
-        target_microscope_batch = self.target_microscope.iloc[idx_target].values
+        #target_moas_batch = self.target_moas.iloc[idx_target].values
+        #target_cpds_batch = self.target_cpds.iloc[idx_target].values
+        #target_microscope_batch = self.target_microscope.iloc[idx_target].values
         
         # Randomly select one source for the entire batch
         source_name = self.id2source[source_idx]
@@ -149,9 +152,9 @@ class PooledDataset(Dataset):
         source_X_batch = torch.tensor(source_X_batch, dtype=torch.float32)
 
         # Extract source metadata
-        source_moas = source_adata_batch.obs.Metadata_moa.values
-        source_cpds = source_adata_batch.obs.Metadata_JCP2022.values
-        source_microscope = source_adata_batch.obs.Metadata_Microscope_Name.values
+        #source_moas = source_adata_batch.obs.Metadata_moa.values
+        #source_cpds = source_adata_batch.obs.Metadata_JCP2022.values
+        #source_microscope = source_adata_batch.obs.Metadata_Microscope_Name.values
 
         # One-hot encode the source label
         source_label = torch.eye(self.num_sources)[(source_idx*torch.ones(target_X_batch.shape[0])).long()]
@@ -159,15 +162,15 @@ class PooledDataset(Dataset):
         return {
             "source": {
                 "x": source_X_batch,
-                "moa": source_moas,
-                "cpd": source_cpds,
-                "microscope": source_microscope,
+                #"moa": source_moas,
+                #"cpd": source_cpds,
+                #"microscope": source_microscope,
             },
             "target": {
                 "x": target_X_batch,
-                "moa": target_moas_batch,
-                "cpd": target_cpds_batch,
-                "microscope": target_microscope_batch,
+                #"moa": target_moas_batch,
+                #"cpd": target_cpds_batch,
+                #"microscope": target_microscope_batch,
             },
             "source_label": source_label,
         }

@@ -43,10 +43,7 @@ def create_ot_cfm_model(adata, use_pca=True, time_varying=True, w=64, num_source
 
     def forward(self, source_batch, source_one_hot, time):
         #source_one_hot = source_one_hot.unsqueeze(1).repeat(1, source_batch.shape[1], 1) #original
-        source_one_hot = source_one_hot.squeeze(1)  # for transport
         source_one_hot = source_one_hot.expand(-1, source_batch.shape[1], -1)  # Expand along the seq_len dimension (for training!)
-        #source_one_hot = source_one_hot.unsqueeze(1).expand(-1, source_batch.shape[1], -1) # (for transport)
-
 
         source_batch = source_batch.unsqueeze(1).expand(-1, source_one_hot.shape[1], -1)
 
@@ -78,21 +75,20 @@ class MLP(nn.Module):
         self.layer1 = nn.Linear(self.dim, self.w)  
         self.layer2 = nn.Linear(self.w, self.w)
         self.layer3 = nn.Linear(self.w, 1)
+        self.expects_raw_input = True  # Tell wrapper not to concatenate
 
     def forward(self, source_batch, source_one_hot, time):
         # Debugging to check input shapes
-        print("in MLP:")
-        print(f"x shape (MLP): {source_batch.shape}")  # [64, 60] after concatenation in TorchWrapper
-        print(f"time shape (MLP): {time.shape}")  # [64, 1]
-        print(f"source_one_hot shape (MLP): {source_one_hot.shape}")  # [64, 9]
+        #print("in MLP:")
+        #print(f"x shape (MLP): {source_batch.shape}")  # [64, 60] after concatenation in TorchWrapper
+        #print(f"time shape (MLP): {time.shape}")  # [64, 1]
+        #print(f"source_one_hot shape (MLP): {source_one_hot.shape}")  # [64, 9]
 
         # No concatenation here. Just pass through the layers
         x = F.relu(self.layer1(source_batch))  # [64, w] 
         x = F.relu(self.layer2(x))  # [64, w]
         x = self.layer3(x)  # [64, 1]
-
         return x
-
 
 
 
